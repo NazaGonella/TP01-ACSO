@@ -26,18 +26,27 @@ uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift){
     return 0;
 }
 
-void adds(uint32_t instruction, int shifted) {
+uint32_t get_Rn(uint32_t instruction){
+    return get_instruction_bit_field(instruction, 5, 4);
+}
 
+uint32_t get_Rd(uint32_t instruction){
+    return get_instruction_bit_field(instruction, 5, 0);
+}
+
+void adds_immediate(uint32_t instruction, int shifted) {
+    if (shifted){
+
+    }else {
+        uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
+        uint32_t Rn = get_Rn(instruction);
+        uint32_t Rd = get_Rd(instruction);
+    }
 }
 
 void process_instruction()
 {
-    /* execute one instruction here. You should use CURRENT_STATE and modify
-     * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
-     * access memory. 
-     * */
-    uint64_t PC = CURRENT_STATE.PC;
-    uint32_t instruction = mem_read_32(PC);
+    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
 
     switch(get_R_opcode(instruction)){
         case (0b10101011001) : printf("INST ADDS (extended register)\n\n"); break;
@@ -55,7 +64,7 @@ void process_instruction()
         case (0b1011000100) : 
             printf("INST ADDS (immediate, shift '00')\n\n");
             // adds(instruction);
-            get_instruction_bit_field(1, 3, 4);
+            adds_immediate(instruction, 00);
             break;
         case (0b1011000101) : printf("INST ADDS (immediate, shift '01')\n\n"); break;
         case (0b1111000100) : printf("INST SUBS (immediate, shift '00')\n\n"); break;
