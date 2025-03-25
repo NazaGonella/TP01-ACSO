@@ -1,16 +1,42 @@
-#include "shell.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
+#include "shell.h"
 
-#define R_OPCODE_MASK  0xFFE00000
-#define I_OPCODE_MASK  0xFFC00000
-#define D_OPCODE_MASK  0x7FF00000
-#define B_OPCODE_MASK  0x7E000000
-#define CB_OPCODE_MASK 0x7F800000
-#define IW_OPCODE_MASK 0x7FF00000
+#define R_OPCODE 0xFFE00000
+#define I_OPCODE 0xFFC00000
+#define D_OPCODE 0xFFE00000
+#define B_OPCODE 0xF8000000
+#define CB_OPCODE 0xFE000000
+#define IW_OPCODE 0xFFE00000
+#define MASCARA 0xFFFFFFFF
+
+#define ADDS_CODE 0xb1000000            //ninguna es prefijo de otra --> esto es lo que nos permite identificar correctamente la inst iterando por todos los tipos
+#define SUBS_CODE
+#define HLT_CODE
+#define CMP_CODE
+#define ANDS_CODE
+#define EOR_CODE
+#define ORR_CODE
+#define CMP_CODE
+#define B_CODE
+#define BR_CODE
+#define BCOND_CODE
+#define LSL_CODE
+#define LSR_CODE
+#define STUR_CODE
+#define STURB_CODE
+#define STURH_CODE
+#define LDUR_CODE
+#define LDURH_CODE
+#define LDURB_CODE
+#define MOVZ_CODE
+#define ADD_CODE
+#define MUL_CODE
+#define CBZ_CODE
+#define CBNZ_CODE
 
 uint32_t get_R_opcode(uint32_t instruction) {
     return (instruction & R_OPCODE_MASK) >> 21;
