@@ -61,29 +61,29 @@ typedef struct {
 //     {"ADDS (immediate, shift '00')", 0xB1000000, adds_immediate}
 // };
 
-uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift){
+uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift) {
     uint32_t bit_mask = ((1 << (size))-1)<<shift;
     return (instruction & bit_mask) >> shift;
 }
 
-uint32_t get_Rn(uint32_t instruction){
+uint32_t get_Rn(uint32_t instruction) {
     return get_instruction_bit_field(instruction, 5, 5);
     // return get_instruction_bit_field(instruction, BIT_MASK_INTERVAL);
 }
 
-uint32_t get_Rd(uint32_t instruction){
+uint32_t get_Rd(uint32_t instruction) {
     return get_instruction_bit_field(instruction, 5, 0);
 }
 
-uint32_t get_Rm(uint32_t instruction){
+uint32_t get_Rm(uint32_t instruction) {
     return get_instruction_bit_field(instruction, 5, 16);
 }
 
-int is_shifted(uint32_t instruction){
+int is_shifted(uint32_t instruction) {
     return get_instruction_bit_field(instruction, 2, 22);
 }
 
-void adds_immediate(uint32_t instruction){
+void adds_immediate(uint32_t instruction) {
     uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
     if (is_shifted(instruction)){
         imm12 = imm12 << 12;
@@ -104,7 +104,7 @@ void adds_immediate(uint32_t instruction){
     NEXT_STATE.PC += 4;
 }
 
-void adds_extended(uint32_t instruction){
+void adds_extended(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
@@ -116,7 +116,7 @@ void adds_extended(uint32_t instruction){
     NEXT_STATE.PC += 4;
 }
 
-void subs_immediate(uint32_t instruction){
+void subs_immediate(uint32_t instruction) {
     uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
     if (is_shifted(instruction)){
         imm12 = imm12 << 12;
@@ -133,11 +133,25 @@ void subs_immediate(uint32_t instruction){
     NEXT_STATE.PC += 4;
 }
 
-void subs_extended(uint32_t instruction){
+void subs_extended(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
     int64_t result = CURRENT_STATE.REGS[Rn] - CURRENT_STATE.REGS[Rm];
+    NEXT_STATE.REGS[Rd] = result;
+    if (result == 0) {
+        NEXT_STATE.FLAG_Z = 1;
+    } else if (result < 0){
+        NEXT_STATE.FLAG_N = 1;
+    }
+    NEXT_STATE.PC += 4;
+}
+
+void ands_extended(uint32_t instruction) {
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    uint32_t Rm = get_Rm(instruction);
+    int64_t result = CURRENT_STATE.REGS[Rn] & CURRENT_STATE.REGS[Rm];
     NEXT_STATE.REGS[Rd] = result;
     if (result == 0) {
         NEXT_STATE.FLAG_Z = 1;
@@ -154,14 +168,14 @@ void halt(uint32_t instruction) {
 
 void process_instruction(){
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-
+    // printf("INSTRUCTION: %x\n", instruction);
     // switch(get_R_opcode(instruction)){
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_A)){
         // case (0b10101011001) : printf("INST ADDS (extended register)\n\n"); adds_extended(instruction); break;
         // case (0b11101011001) : printf("INST SUBS (extended register)\n\n"); subs_extended(instruction); break;
-        case (0b10101011000) : printf("INST ADDS (extended register)\n\n"); adds_extended(instruction); break;
-        case (0b11101011000) : printf("INST SUBS (extended register)\n\n"); subs_extended(instruction); break;
-        case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n"); break;
+        case (0b10101011000) : printf("INST ADDS (extended register)\n\n");             adds_extended(instruction); break;
+        case (0b11101011000) : printf("INST SUBS (extended register)\n\n");             subs_extended(instruction); break;
+        case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");  ands_extended(instruction); break;
         case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n"); break;
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
         case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n"); break;
