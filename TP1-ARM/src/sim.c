@@ -68,36 +68,42 @@ uint32_t get_Rd(uint32_t instruction){
 }
 
 void adds_immediate(uint32_t instruction, int shifted){
+    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
     if (shifted){
-
-    }else {
-        uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-        uint32_t Rn = get_Rn(instruction);
-        uint32_t Rd = get_Rd(instruction);
+        imm12 = imm12 << 12;
     }
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    // printf("\n");
+    // printf("Instruction: %x\n", instruction);
+    // printf("imm12: %x\n", imm12);
+    // printf("Rn   : %x\n", Rn);
+    // printf("Rd   : %x\n", Rd);
+    // printf("\nRESULT: %ld\n\n", result);
+    int64_t result = CURRENT_STATE.REGS[Rn] + imm12;
+    NEXT_STATE.REGS[Rd] = result;
+    if (result == 0) {
+        NEXT_STATE.FLAG_Z = 1;
+    }
+    NEXT_STATE.PC += 4;
 }
 
 void subs_immediate(uint32_t instruction, int shifted){
+    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
     if (shifted){
-
-    }else {
-        uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-        uint32_t Rn = get_Rn(instruction);
-        uint32_t Rd = get_Rd(instruction);
-        printf("\n");
-        printf("Instruction: %x\n", instruction);
-        printf("imm12: %x\n", imm12);
-        printf("Rn   : %x\n", Rn);
-        printf("Rd   : %x\n", Rd);
-        int64_t result = CURRENT_STATE.REGS[Rn] - imm12;
-        printf("\nRESULT: %ld\n\n", result);
-        NEXT_STATE.REGS[Rd] = result;
-        if (result == 0) {
-            NEXT_STATE.FLAG_Z = 1;
-        } else if (result < 0) {
-            NEXT_STATE.FLAG_N = 1;
-        }
+        imm12 = imm12 << 12;
     }
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    printf("\n");
+    int64_t result = CURRENT_STATE.REGS[Rn] - imm12;
+    NEXT_STATE.REGS[Rd] = result;
+    if (result == 0) {
+        NEXT_STATE.FLAG_Z = 1;
+    } else if (result < 0) {
+        NEXT_STATE.FLAG_N = 1;
+    }
+    NEXT_STATE.PC += 4;
 }
 
 void process_instruction(){
@@ -132,5 +138,4 @@ void process_instruction(){
         case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n"); break;
         case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n"); break;
     }
-    NEXT_STATE.PC += 4;
 }
