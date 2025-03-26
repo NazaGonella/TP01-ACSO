@@ -51,13 +51,11 @@
 #define CBZ_CODE 0xB4000000
 #define CBNZ_CODE 0xB5000000
 
-// uint32_t get_R_opcode(uint32_t instruction){
-//     return (instruction & R_OPCODE_MASK) >> 21;
-// }
-
-// uint32_t get_I_opcode(uint32_t instruction){
-//     return (instruction & I_OPCODE_MASK) >> 22;
-// }
+typedef struct {
+    const char *name;
+    uint32_t opcode;
+    void (*run)(uint32_t);
+} Instruction;
 
 uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift){
     uint32_t bit_mask = ((1 << (size))-1)<<shift;
@@ -74,9 +72,14 @@ uint32_t get_Rd(uint32_t instruction){
     return get_instruction_bit_field(instruction, 5, 0);
 }
 
-void adds_immediate(uint32_t instruction, int shifted){
+int is_shifted(uint32_t instruction){
+    printf("%x", get_instruction_bit_field(instruction, 2, 22));
+    return get_instruction_bit_field(instruction, 2, 22);
+}
+
+void adds_immediate(uint32_t instruction){
     uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-    if (shifted){
+    if (is_shifted(instruction)){
         imm12 = imm12 << 12;
     }
     uint32_t Rn = get_Rn(instruction);
@@ -95,9 +98,9 @@ void adds_immediate(uint32_t instruction, int shifted){
     NEXT_STATE.PC += 4;
 }
 
-void subs_immediate(uint32_t instruction, int shifted){
+void subs_immediate(uint32_t instruction){
     uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-    if (shifted){
+    if (is_shifted(instruction)){
         imm12 = imm12 << 12;
     }
     uint32_t Rn = get_Rn(instruction);
@@ -112,6 +115,10 @@ void subs_immediate(uint32_t instruction, int shifted){
     }
     NEXT_STATE.PC += 4;
 }
+
+Instruction instructions[] = {
+    {"ADDS (immediate, shift '00')", 0xB1000000, adds_immediate}
+};
 
 void process_instruction(){
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
@@ -131,15 +138,15 @@ void process_instruction(){
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
     // switch(get_I_opcode(instruction)){
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_B)){
-        case (0b1011000100) : printf("INST ADDS (immediate, shift '00')\n\n"); adds_immediate(instruction, 00); break;
+        case (0b1011000100) : printf("INST ADDS (immediate, shift '00')\n\n"); adds_immediate(instruction); break;
         case (0b1011000101) : printf("INST ADDS (immediate, shift '01')\n\n"); break;
         case (0b1111000100):
             printf("INST SUBS (immediate, shift '00')\n\n");
-            subs_immediate(instruction, 00);
+            subs_immediate(instruction);
             break;
         case (0b1111000101): 
             printf("INST SUBS (immediate, shift '01')\n\n");
-            subs_immediate(instruction, 01);
+            subs_immediate(instruction);
             break;
         case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n"); break;
         case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n"); break;
