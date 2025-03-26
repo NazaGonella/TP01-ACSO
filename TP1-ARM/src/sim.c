@@ -194,6 +194,7 @@ void movz(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+// ESTA BIEN??
 void stur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
@@ -212,13 +213,20 @@ void halt(uint32_t instruction) {
 
 void process_instruction(){
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-    // printf("INSTRUCTION: %x\n", instruction);
+    printf("INSTRUCTION: %x\n", instruction);
     // switch(get_R_opcode(instruction)){
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_A)){
         // case (0b10101011001) : printf("INST ADDS (extended register)\n\n"); adds_extended(instruction); break;
         // case (0b11101011001) : printf("INST SUBS (extended register)\n\n"); subs_extended(instruction); break;
         case (0b10101011000) : printf("INST ADDS (extended register)\n\n");             adds_extended(instruction); break;
-        case (0b11101011000) : printf("INST SUBS (extended register)\n\n");             subs_extended(instruction); break;
+        case (0b11101011000) :
+            if (get_Rd(instruction) == 0b11111) {
+                printf("INST CMP (extended register)\n\n");
+                cmp_extended(instruction);
+            } else {
+                printf("INST SUBS (extended register)\n\n");
+                subs_extended(instruction); break;
+            }
         case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");  ands_extended(instruction); break;
         case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n");    eor_extended(instruction); break;
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
@@ -226,7 +234,7 @@ void process_instruction(){
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
         case (0b11010100010) : printf("INST HALT\n\n"); halt(instruction); break;
         // CREO QUE MAL
-        case (0b11101011001) : printf("INST CMP (extended register)\n\n");              cmp_extended(instruction); break;
+        // case (0b11101011001) : printf("INST CMP (extended register)\n\n");              cmp_extended(instruction); break;
         case (0b11111000000) : printf("INST STUR\n\n");                                 stur(instruction); break;
         case (0b10111000000) : printf("INST STUR\n\n");                                 stur(instruction); break;
     }
