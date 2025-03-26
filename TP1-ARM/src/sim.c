@@ -147,17 +147,24 @@ void subs_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+void cmp_extended(uint32_t instruction) {
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rm = get_Rm(instruction);
+    int64_t result = CURRENT_STATE.REGS[Rn] - CURRENT_STATE.REGS[Rm];
+    NEXT_STATE.REGS[31] = result;
+    if (result == 0) {
+        NEXT_STATE.FLAG_Z = 1;
+    } else if (result < 0){
+        NEXT_STATE.FLAG_N = 1;
+    }
+}
+
 void ands_extended(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
     int64_t result = CURRENT_STATE.REGS[Rn] & CURRENT_STATE.REGS[Rm];
     NEXT_STATE.REGS[Rd] = result;
-    // if (result == 0) {
-    //     NEXT_STATE.FLAG_Z = 1;
-    // } else if (result < 0){
-    //     NEXT_STATE.FLAG_N = 1;
-    // }
     NEXT_STATE.PC += 4;
 }
 
@@ -167,11 +174,16 @@ void eor_extended(uint32_t instruction) {
     uint32_t Rm = get_Rm(instruction);
     int64_t result = CURRENT_STATE.REGS[Rn] ^ CURRENT_STATE.REGS[Rm];
     NEXT_STATE.REGS[Rd] = result;
-    // if (result == 0) {
-    //     NEXT_STATE.FLAG_Z = 1;
-    // } else if (result < 0){
-    //     NEXT_STATE.FLAG_N = 1;
-    // }
+    NEXT_STATE.PC += 4;
+}
+
+// Está bien???
+void logical_shift_left_immediate(uint32_t instruction) {
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    uint32_t immr = get_instruction_bit_field(instruction, 5, 16);
+    // printf("IMMR: %x", immr);
+    NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
     NEXT_STATE.PC += 4;
 }
 
@@ -202,6 +214,8 @@ void process_instruction(){
         case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n");                                movz(instruction); break;
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
         case (0b11010100010) : printf("INST HALT\n\n"); halt(instruction); break;
+        // CREO QUE MAL
+        case (0b11101011001) : printf("INST CMP (extended register)\n\n");              cmp_extended(instruction); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
@@ -213,5 +227,7 @@ void process_instruction(){
         case (0b1111000101) : printf("INST SUBS (immediate, shift '01')\n\n"); subs_immediate(instruction); break;
         case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n");  break;
         case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n");  break;
+        case (0b1101001101) : printf("INST LSL (immediate)\n\n"); logical_shift_left_immediate(instruction); break;
+                // 11010011011100001011110000100001
     }
 }
