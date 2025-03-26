@@ -161,6 +161,13 @@ void ands_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+void movz(uint32_t instruction) {
+    uint32_t imm16 = get_instruction_bit_field(instruction, 16, 5);
+    uint32_t Rd = get_Rd(instruction);
+    NEXT_STATE.REGS[Rd] = imm16;
+    NEXT_STATE.PC += 4;
+}
+
 void halt(uint32_t instruction) {
     RUN_BIT = 0;
     NEXT_STATE.PC += 4;
@@ -178,7 +185,7 @@ void process_instruction(){
         case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");  ands_extended(instruction); break;
         case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n"); break;
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
-        case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n"); break;
+        case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n");                                movz(instruction); break;
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
         case (0b11010100010) : printf("INST HALT\n\n"); halt(instruction); break;
     }
