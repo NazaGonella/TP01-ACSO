@@ -57,9 +57,12 @@ typedef struct {
     void (*run)(uint32_t);
 } Instruction;
 
+// Instruction instructions[] = {
+//     {"ADDS (immediate, shift '00')", 0xB1000000, adds_immediate}
+// };
+
 uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift){
     uint32_t bit_mask = ((1 << (size))-1)<<shift;
-    // printf("ESTO: %x\n", bit_mask);
     return (instruction & bit_mask) >> shift;
 }
 
@@ -73,8 +76,11 @@ uint32_t get_Rd(uint32_t instruction){
 }
 
 int is_shifted(uint32_t instruction){
-    printf("%x", get_instruction_bit_field(instruction, 2, 22));
     return get_instruction_bit_field(instruction, 2, 22);
+}
+
+void halt(uint32_t instruction) {
+    RUN_BIT = 0;
 }
 
 void adds_immediate(uint32_t instruction){
@@ -105,7 +111,6 @@ void subs_immediate(uint32_t instruction){
     }
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
-    printf("\n");
     int64_t result = CURRENT_STATE.REGS[Rn] - imm12;
     NEXT_STATE.REGS[Rd] = result;
     if (result == 0) {
@@ -115,10 +120,6 @@ void subs_immediate(uint32_t instruction){
     }
     NEXT_STATE.PC += 4;
 }
-
-Instruction instructions[] = {
-    {"ADDS (immediate, shift '00')", 0xB1000000, adds_immediate}
-};
 
 void process_instruction(){
     uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
@@ -132,6 +133,7 @@ void process_instruction(){
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
         case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n"); break;
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
+        case (0b11010100010) : printf("INST HALT\n\n"); halt(instruction); break;
         // case (0b10110001000) : printf(":D\n\n"); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
@@ -139,16 +141,10 @@ void process_instruction(){
     // switch(get_I_opcode(instruction)){
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_B)){
         case (0b1011000100) : printf("INST ADDS (immediate, shift '00')\n\n"); adds_immediate(instruction); break;
-        case (0b1011000101) : printf("INST ADDS (immediate, shift '01')\n\n"); break;
-        case (0b1111000100):
-            printf("INST SUBS (immediate, shift '00')\n\n");
-            subs_immediate(instruction);
-            break;
-        case (0b1111000101): 
-            printf("INST SUBS (immediate, shift '01')\n\n");
-            subs_immediate(instruction);
-            break;
-        case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n"); break;
-        case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n"); break;
+        case (0b1011000101) : printf("INST ADDS (immediate, shift '01')\n\n"); adds_immediate(instruction); break;
+        case (0b1111000100) : printf("INST SUBS (immediate, shift '00')\n\n"); subs_immediate(instruction); break;
+        case (0b1111000101) : printf("INST SUBS (immediate, shift '01')\n\n"); subs_immediate(instruction); break;
+        case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n");  break;
+        case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n");  break;
     }
 }
