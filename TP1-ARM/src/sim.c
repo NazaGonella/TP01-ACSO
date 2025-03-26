@@ -133,6 +133,20 @@ void subs_immediate(uint32_t instruction){
     NEXT_STATE.PC += 4;
 }
 
+void subs_extended(uint32_t instruction){
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    uint32_t Rm = get_Rm(instruction);
+    int64_t result = CURRENT_STATE.REGS[Rn] - CURRENT_STATE.REGS[Rm];
+    NEXT_STATE.REGS[Rd] = result;
+    if (result == 0) {
+        NEXT_STATE.FLAG_Z = 1;
+    } else if (result < 0){
+        NEXT_STATE.FLAG_N = 1;
+    }
+    NEXT_STATE.PC += 4;
+}
+
 void halt(uint32_t instruction) {
     RUN_BIT = 0;
     NEXT_STATE.PC += 4;
@@ -143,9 +157,10 @@ void process_instruction(){
 
     // switch(get_R_opcode(instruction)){
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_A)){
-        // case (0b10101011001) : printf("INST ADDS (extended register)\n\n"); break;
+        // case (0b10101011001) : printf("INST ADDS (extended register)\n\n"); adds_extended(instruction); break;
+        // case (0b11101011001) : printf("INST SUBS (extended register)\n\n"); subs_extended(instruction); break;
         case (0b10101011000) : printf("INST ADDS (extended register)\n\n"); adds_extended(instruction); break;
-        case (0b11101011001) : printf("INST SUBS (extended register)\n\n"); break;
+        case (0b11101011000) : printf("INST SUBS (extended register)\n\n"); subs_extended(instruction); break;
         case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n"); break;
         case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n"); break;
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
