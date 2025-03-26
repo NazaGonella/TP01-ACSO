@@ -179,9 +179,9 @@ void eor_extended(uint32_t instruction) {
 
 // Está bien???
 void logical_shift_left_immediate(uint32_t instruction) {
+    uint32_t immr = get_instruction_bit_field(instruction, 5, 16);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
-    uint32_t immr = get_instruction_bit_field(instruction, 5, 16);
     // printf("IMMR: %x", immr);
     NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
     NEXT_STATE.PC += 4;
@@ -191,6 +191,17 @@ void movz(uint32_t instruction) {
     uint32_t imm16 = get_instruction_bit_field(instruction, 16, 5);
     uint32_t Rd = get_Rd(instruction);
     NEXT_STATE.REGS[Rd] = imm16;
+    NEXT_STATE.PC += 4;
+}
+
+void stur(uint32_t instruction) {
+    uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rt = get_Rd(instruction);
+    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, CURRENT_STATE.REGS[Rt]);
+    // printf("imm9: %x\n", imm9);
+    // printf("Rn: %x\n", Rn);
+    // printf("Rt: %x\n", Rt);
     NEXT_STATE.PC += 4;
 }
 
@@ -216,6 +227,8 @@ void process_instruction(){
         case (0b11010100010) : printf("INST HALT\n\n"); halt(instruction); break;
         // CREO QUE MAL
         case (0b11101011001) : printf("INST CMP (extended register)\n\n");              cmp_extended(instruction); break;
+        case (0b11111000000) : printf("INST STUR\n\n");                                 stur(instruction); break;
+        case (0b10111000000) : printf("INST STUR\n\n");                                 stur(instruction); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
