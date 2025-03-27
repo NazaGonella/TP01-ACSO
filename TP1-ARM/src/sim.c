@@ -333,6 +333,14 @@ void process_instruction(){
             } else if (get_cond(instruction) == 0b1011) {
                 printf("INST BLT\n\n");
                 blt(instruction);
-            } break;
+            } else if (get_cond(instruction) == 0b0001){
+                printf("INST BNE");
+            } else if (get_cond(instruction) == 0b1100) {
+                printf("INST BGT");
+            } else if (get_cond(instruction) == 0b1010) {
+                printf("INST BGE");
+            } else if (get_cond(instruction) == 0b1101) {
+                printf("INST BLE");
+            }break;
     }
 }
