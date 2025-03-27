@@ -11,38 +11,6 @@
 #define OPCODE_INTERVAL_D 6, 26
 #define OPCODE_INTERVAL_8 8, 24
 
-#define ADDS_IMM_00_CODE 0xB1000000            //ninguna es prefijo de otra --> esto es lo que nos permite identificar correctamente la inst iterando por todos los tipos
-#define ADDS_IMM_01_CODE 0xB1C00000
-#define ADDS_EXT_CODE 0xAB200000
-#define SUBS_IMM_00_CODE 0x3C400000
-#define SUBS_IMM_01_CODE 0x3C500000
-#define SUBS_EXT_CODE 0x3AC80000  // es igual que cmp ext
-#define HLT_CODE 0x35100000
-#define CMP_EXT_CODE 0x3AC80000 // es igual que sub ext
-#define CMP_IMM_00_CODE 0x3C400000  // es igual que subs imm 00
-#define CMP_IMM_01_CODE 0x3C500000  // es igual que subs imm 01
-#define ANDS_CODE 0x3A800000
-#define EOR_CODE 0x32800000
-#define ORR_CODE 0x2A800000
-#define B_CODE 0x14000000
-#define BR_CODE
-#define BCOND_CODE 0x54000000
-#define LSL_IMM_CODE 0xD3000000 //?
-#define LSR_IMM_CODE 0x         //?
-#define STUR_CODE
-#define STURB_CODE
-#define STURH_CODE
-#define LDUR_CODE
-#define LDURH_CODE
-#define LDURB_CODE
-#define MOVZ_CODE 0xD2800000
-#define ADD_IMM_00_CODE 0x91000000
-#define ADD_IMM_01_CODE 0x91400000
-#define ADD_EXT_CODE
-#define MUL_CODE
-#define CBZ_CODE 0xB4000000
-#define CBNZ_CODE 0xB5000000
-
 typedef struct {
     const char *name;
     uint32_t opcode;
@@ -160,7 +128,7 @@ void cmp_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-void ands_extended(uint32_t instruction) {
+void ands_shifted(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
@@ -169,7 +137,7 @@ void ands_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-void eor_extended(uint32_t instruction) {
+void eor_shifted(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
@@ -256,6 +224,47 @@ void halt(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+
+void orr_shifted(uint32_t instruction) {
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    uint32_t Rm = get_Rm(instruction);
+    int64_t result= CURRENT_STATE.REGS[Rn] | CURRENT_STATE.REGS[Rm];
+    NEXT_STATE.REGS[Rd] = result;
+    NEXT_STATE.PC += 4;
+}
+
+void b(uint32_t instruction) {
+    int offset=0;
+    NEXT_STATE.PC += offset;
+}
+
+void br(uint32_t instruction) {
+    uint32_t Rn = get_Rn(instruction);
+    NEXT_STATE.PC = CURRENT_STATE.REGS[Rn];
+}
+
+void bcond(uint32_t instruction) {
+    NEXT_STATE.PC += 4;
+}
+
+void cmp_immediate(uint32_t instruction){
+
+}
+
+void logical_shift_immediate(uint32_t instruction){
+
+}
+
+void mul(uint32_t instruction){
+
+}
+
+void add_extended(uint32_t instruction){
+
+}
+
+
 Instruction instructions[] = {
     {"INST ADDS (extended register)", 0b10101011000, adds_extended},
     {"INST ADDS (immediate, shift 00)", 0b1011000100, adds_immediate},
@@ -265,28 +274,27 @@ Instruction instructions[] = {
     {"INST SUBS (immediate, shift 01)", 0b1111000101, subs_immediate},
     {"INST HLT", 0b11010100010, halt},
     {"INST CMP (extended register)", 0b11101011000,cmp_extended},
-    {"INST CMP (immediate, shift 00)"},
-    {"INST CMP (immediate, shift 01)"},
-    {"INST ANDS (shifted register, shift '00')", 0b11010010100, ands_extended},
-    {"INST EOR (shifted register, shift '00')", 0b11001010000, eor_extended},
-    {"INST ORR (shifted register, shift '00')"},
-    {"INST B"},
-    {"INST BR"},
-    {"INST BCOND"},
-    {"INST LSL (immediate)", 0b1101001101, logical_shift_left_immediate},
-    {"INST LSR (immediate)", },
+    {"INST CMP (immediate, shift 00)", 0b1111000100, cmp_immediate},
+    {"INST ANDS (shifted register, shift '00')", 0b11010010100, ands_shifted},
+    {"INST EOR (shifted register, shift '00')", 0b11001010000, eor_shifted},
+    {"INST ORR (shifted register, shift '00')",0b10101010000,orr_shifted},
+    {"INST B", 0b01010100, b},
+    {"INST BR", 0b01010100, br},
+    {"INST BCOND", 0b01010100, bcond},
+    {"INST LSL (immediate)", 0b1101001101, logical_shift_immediate},
+    {"INST LSR (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST STUR", 0b11111000000, stur},
     {"INST STUR", 0b10111000000, stur},
-    {"INST STURB"},
-    {"INST STURH"},
-    {"INST LDUR"},
-    {"INST LDURH"},
-    {"INST LDURB"},
+    {"INST STURB", 0b00111000000, stur},
+    {"INST STURH", 0b01111000000,stur}, //cambiar
+    {"INST LDUR", 0b11111000010,stur},
+    {"INST LDURH",0b01111000010,stur},
+    {"INST LDURB", 0b00111000010,stur},
     {"INST MOVZ", 0b11010010100, movz},
     {"INST ADD (immediate, shift '00')", 0b1001000100, add_immediate},
     {"INST ADD (immediate, shift '01')", 0b1001000101, add_immediate},
-    {"INST ADD (extended register)"},
-    {"INST MUL"},
+    {"INST ADD (extended register)",0b1001000100, add_extended},
+    {"INST MUL", 0b10011011000, mul},
     {"INST CBZ", 0b10101011001, cmp_extended},
     {"INST CBNZ", 0b11101011001, cmp_extended},
     {}
@@ -306,8 +314,9 @@ void process_instruction(){
                 printf("INST SUBS (extended register)\n\n");
                 subs_extended(instruction);
             } break;
-        case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");  ands_extended(instruction); break;
-        case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n");    eor_extended(instruction); break;
+        case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");  ands_shifted(instruction); break;
+        case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n");    eor_shifted
+    (instruction); break;
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
         case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n");                                movz(instruction); break;
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
