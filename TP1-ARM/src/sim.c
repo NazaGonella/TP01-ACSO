@@ -189,7 +189,6 @@ void eor_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-// Está bien???
 void logical_shift_left_immediate(uint32_t instruction) {
     // uint32_t immr = get_instruction_bit_field(instruction, 5, 16);
     uint32_t immr = 64 - get_instruction_bit_field(instruction, 6, 16);
@@ -208,15 +207,14 @@ void movz(uint32_t instruction) {
 }
 
 void beq(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 4);
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
     int64_t offset = (int64_t)(imm19 << 2);
     if (imm19 & (1 << 18)) {
         offset |= 0xFFFFFFFFFFE00000;
     }
     if (CURRENT_STATE.FLAG_Z == 1) {
         NEXT_STATE.PC += offset;
-    } else {
-        NEXT_STATE.PC += 4;
+        // NEXT_STATE.PC = NEXT_STATE.PC + (imm19 * 2);
     }
 }
 
