@@ -191,10 +191,11 @@ void eor_extended(uint32_t instruction) {
 
 // Está bien???
 void logical_shift_left_immediate(uint32_t instruction) {
-    uint32_t immr = get_instruction_bit_field(instruction, 5, 16);
+    // uint32_t immr = get_instruction_bit_field(instruction, 5, 16);
+    uint32_t immr = 64 - get_instruction_bit_field(instruction, 6, 16);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
-    // printf("IMMR: %x", immr);
+    printf("IMMR: %x", immr);
     NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
     NEXT_STATE.PC += 4;
 }
@@ -213,7 +214,9 @@ void beq(uint32_t instruction) {
         offset |= 0xFFFFFFFFFFE00000;
     }
     if (CURRENT_STATE.FLAG_Z == 1) {
-        NEXT_STATE.PC += imm19 << 2;
+        NEXT_STATE.PC += offset;
+    } else {
+        NEXT_STATE.PC += 4;
     }
 }
 
