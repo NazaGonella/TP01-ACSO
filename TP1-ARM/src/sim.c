@@ -87,7 +87,11 @@ void update_flags(int64_t result) {
         NEXT_STATE.FLAG_Z = 0;
         NEXT_STATE.FLAG_N = 1;
     }
-} 
+}
+
+uint8_t sign_extend(){
+
+}
 
 void adds_immediate(uint32_t instruction) {
     uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
@@ -221,6 +225,10 @@ void stur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
+    int64_t offset = (int64_t)(imm9);
+    if (imm9 & (1 << 8)) {
+        offset |= 0xFFFFFFFFFFFFFE00;
+    }
     mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, CURRENT_STATE.REGS[Rt]);
     // printf("imm9: %x\n", imm9);
     // printf("Rn: %x\n", Rn);
@@ -232,10 +240,14 @@ void sturb(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, CURRENT_STATE.REGS[Rt]);
-    // printf("imm9: %x\n", imm9);
-    // printf("Rn: %x\n", Rn);
-    // printf("Rt: %x\n", Rt);
+    int64_t offset = (int64_t)(imm9);
+    if (imm9 & (1 << 8)) {
+        offset |= 0xFFFFFFFFFFFFFE00;
+    }
+    uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;
+    uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9);
+    uint32_t Rt_8_or = (mem & (((1 << (24))-1)<<8)) | Rt_8;
+    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, Rt_8_or);
     NEXT_STATE.PC += 4;
 }
 
@@ -299,9 +311,10 @@ void process_instruction(){
         case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
         case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n");                                movz(instruction); break;
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
-        case (0b11010100010) : printf("INST HALT\n\n"); halt(instruction); break;
-        case (0b11111000000) : printf("INST STUR\n\n");                                 stur(instruction); break;
-        case (0b10111000000) : printf("INST STUR\n\n");                                 stur(instruction); break;
+        case (0b11010100010) : printf("INST HALT\n\n");                                          halt(instruction); break;
+        case (0b11111000000) : printf("INST STUR\n\n");                                          stur(instruction); break;
+        case (0b10111000000) : printf("INST STUR\n\n");                                          stur(instruction); break;
+        case (0b00111000000) : printf("INST STURB\n\n");                                        sturb(instruction); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
