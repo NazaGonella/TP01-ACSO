@@ -469,19 +469,18 @@ Instruction instructions[] = {
     {"INST LSL (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST LSR (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST STUR", 0b11111000000, stur},
-    {"INST STURB", 0b00111000000, stur},
-    {"INST STURH", 0b01111000000,stur}, //cambiar
-    {"INST LDUR", 0b11111000010,stur},
-    {"INST LDURH",0b01111000010,stur},
-    {"INST LDURB", 0b00111000010,stur},
+    {"INST STURB", 0b00111000000, sturb},
+    {"INST STURH", 0b01111000000,sturh}, //cambiar
+    {"INST LDUR", 0b11111000010,ldur},
+    {"INST LDURH",0b01111000010,ldurh},
+    {"INST LDURB", 0b00111000010,ldurb},
     {"INST MOVZ", 0b11010010100, movz},
     {"INST ADD (immediate, shift '00')", 0b1001000100, add_immediate},
     {"INST ADD (immediate, shift '01')", 0b1001000101, add_immediate},
     {"INST ADD (extended register)",0b1001000100, add_extended},
     {"INST MUL", 0b10011011000, mul},
-    {"INST CBZ", 0b10101011001, cmp_extended},
-    {"INST CBNZ", 0b11101011001, cmp_extended},
-    {}
+    {"INST CBZ", 0b10101011001, cbz},
+    {"INST CBNZ", 0b11101011001, cbnz},
 };
 
 void process_instruction(){
