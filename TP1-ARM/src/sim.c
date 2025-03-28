@@ -249,7 +249,7 @@ void stur(uint32_t instruction) {
     if (imm9 & (1 << 8)) {
         offset |= 0xFFFFFFFFFFFFFE00;
     }
-    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, CURRENT_STATE.REGS[Rt]);
+    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, CURRENT_STATE.REGS[Rt]);
     NEXT_STATE.PC += 4;
 }
 
@@ -262,9 +262,9 @@ void sturb(uint32_t instruction) {
         offset |= 0xFFFFFFFFFFFFFE00;
     }
     uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;                        // Agarro los primeros 8 bits
-    uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9);
+    uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
     uint32_t Rt_8_or_mem = (mem & (((1 << (24))-1)<<8)) | Rt_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
-    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, Rt_8_or_mem);
+    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_8_or_mem);
     NEXT_STATE.PC += 4;
 }
 
