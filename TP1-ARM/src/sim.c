@@ -411,11 +411,11 @@ void br(uint32_t instruction) {
 void logical_shift_immediate(uint32_t instruction){
     uint32_t imms = get_instruction_bit_field(instruction, 6, 10);
     if (imms == 0b111111 || imms == 0b011111){
-        printf("INST LSL (immediate)\n\n");
-        logical_shift_left_immediate(instruction);
-    } else {
         printf("INST LSR (immediate)\n\n");
         logical_shift_right_immediate(instruction);
+    } else {
+        printf("INST LSL (immediate)\n\n");
+        logical_shift_left_immediate(instruction);
     }
 }
 
