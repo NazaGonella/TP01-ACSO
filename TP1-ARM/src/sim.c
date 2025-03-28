@@ -123,7 +123,16 @@ void cmp_extended(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rm = get_Rm(instruction);
     int64_t result = CURRENT_STATE.REGS[Rn] - CURRENT_STATE.REGS[Rm];
-    NEXT_STATE.REGS[31] = result;
+    // NEXT_STATE.REGS[31] = result;
+    update_flags(result);
+    NEXT_STATE.PC += 4;
+}
+
+void cmp_immediate(uint32_t instruction){
+    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
+    uint32_t Rn = get_Rn(instruction);
+    int64_t result = CURRENT_STATE.REGS[Rn] - imm12;
+    // NEXT_STATE.REGS[31] = result;
     update_flags(result);
     NEXT_STATE.PC += 4;
 }
@@ -318,10 +327,6 @@ void b(uint32_t instruction) {
 void br(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     NEXT_STATE.PC = CURRENT_STATE.REGS[Rn];
-}
-
-void cmp_immediate(uint32_t instruction){
-
 }
 
 void logical_shift_immediate(uint32_t instruction){
