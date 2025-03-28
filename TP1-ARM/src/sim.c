@@ -286,6 +286,21 @@ void sturb(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+void sturh(uint32_t instruction) {
+    uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rt = get_Rd(instruction);
+    int64_t offset = (int64_t)(imm9);
+    if (imm9 & (1 << 8)) {
+        offset |= 0xFFFFFFFFFFFFFE00;
+    }
+    uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0b1111111111111111;                        // Agarro los primeros 16 bits
+    uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
+    uint32_t Rt_16_or_mem = (mem & (((1 << (16))-1)<<16)) | Rt_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
+    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_16_or_mem);
+    NEXT_STATE.PC += 4;
+}
+
 void ldur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
