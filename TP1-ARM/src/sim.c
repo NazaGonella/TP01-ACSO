@@ -184,6 +184,58 @@ void blt(uint32_t instruction) {
     }
 }
 
+void ble(uint32_t instruction) {
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
+    int64_t offset = (int64_t)(imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFFFFFFFE00000;
+    }
+    if (!(CURRENT_STATE.FLAG_Z == 1 || CURRENT_STATE.FLAG_N == 0)) {
+        NEXT_STATE.PC += offset;
+    } else{
+        NEXT_STATE.PC += 4;
+    }
+}
+
+void bne(uint32_t instruction) {
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
+    int64_t offset = (int64_t)(imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFFFFFFFE00000;
+    }
+    if (CURRENT_STATE.FLAG_Z == 0) {
+        NEXT_STATE.PC += offset;
+    } else{
+        NEXT_STATE.PC += 4;
+    }
+}
+
+void bge(uint32_t instruction) {
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
+    int64_t offset = (int64_t)(imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFFFFFFFE00000;
+    }
+    if (CURRENT_STATE.FLAG_N == 0) {
+        NEXT_STATE.PC += offset;
+    } else{
+        NEXT_STATE.PC += 4;
+    }
+}
+
+void bgt(uint32_t instruction) {
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
+    int64_t offset = (int64_t)(imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFFFFFFFE00000;
+    }
+    if (CURRENT_STATE.FLAG_Z == 0 && CURRENT_STATE.FLAG_N == 0) {
+        NEXT_STATE.PC += offset;
+    } else{
+        NEXT_STATE.PC += 4;
+    }
+}
+
 // ESTA BIEN??
 void stur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
@@ -250,6 +302,28 @@ void mul(uint32_t instruction){
 
 void add_extended(uint32_t instruction){
 
+}
+
+void bcond(uint32_t instruction){
+    if (get_cond(instruction) == 0b0000) {
+        printf("INST BEQ\n\n");
+        beq(instruction);
+    } else if (get_cond(instruction) == 0b1011) {
+        printf("INST BLT\n\n");
+        blt(instruction);
+    } else if (get_cond(instruction) == 0b0001){
+        printf("INST BNE");
+        bne(instruction);
+    } else if (get_cond(instruction) == 0b1100) {
+        printf("INST BGT");
+        bgt(instruction);
+    } else if (get_cond(instruction) == 0b1010) {
+        printf("INST BGE");
+        bge(instruction);
+    } else if (get_cond(instruction) == 0b1101) {
+        printf("INST BLE");
+        ble(instruction);
+    }
 }
 
 
@@ -327,20 +401,8 @@ void process_instruction(){
 
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_8)){
         case (0b01010100) :
-            if (get_cond(instruction) == 0b0000) {
-                printf("INST BEQ\n\n");
-                beq(instruction);
-            } else if (get_cond(instruction) == 0b1011) {
-                printf("INST BLT\n\n");
-                blt(instruction);
-            } else if (get_cond(instruction) == 0b0001){
-                printf("INST BNE");
-            } else if (get_cond(instruction) == 0b1100) {
-                printf("INST BGT");
-            } else if (get_cond(instruction) == 0b1010) {
-                printf("INST BGE");
-            } else if (get_cond(instruction) == 0b1101) {
-                printf("INST BLE");
-            }break;
+            printf("INST BCOND\n\n");
+            bcond(instruction);
+            break;
     }
 }
