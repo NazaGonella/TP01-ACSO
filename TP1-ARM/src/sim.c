@@ -164,6 +164,15 @@ void logical_shift_left_immediate(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+void logical_shift_right_immediate(uint32_t instruction) {
+    uint32_t immr = get_instruction_bit_field(instruction, 6, 16);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    // printf("IMMR: %x", immr);
+    NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] >> immr;
+    NEXT_STATE.PC += 4;
+}
+
 void movz(uint32_t instruction) {
     uint32_t imm16 = get_instruction_bit_field(instruction, 16, 5);
     uint32_t Rd = get_Rd(instruction);
@@ -334,7 +343,14 @@ void br(uint32_t instruction) {
 }
 
 void logical_shift_immediate(uint32_t instruction){
-
+    uint32_t imms = get_instruction_bit_field(instruction, 6, 10);
+    if (imms == 0b111111 || imms == 0b011111){
+        printf("INST LSL (immediate)\n\n");
+        logical_shift_left_immediate(instruction);
+    } else {
+        printf("INST LSR (immediate)\n\n");
+        logical_shift_right_immediate(instruction);
+    }
 }
 
 void mul(uint32_t instruction){
@@ -437,7 +453,7 @@ void process_instruction(){
         case (0b1111000101) : printf("INST SUBS (immediate, shift '01')\n\n"); subs_immediate(instruction); break;
         case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n");  break;
         case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n");  break;
-        case (0b1101001101) : printf("INST LSL (immediate)\n\n"); logical_shift_left_immediate(instruction); break;
+        case (0b1101001101) : logical_shift_immediate(instruction); break;
     }
 
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_6)) {
