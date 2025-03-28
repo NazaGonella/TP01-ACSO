@@ -268,6 +268,34 @@ void bgt(uint32_t instruction) {
     }
 }
 
+void cbz(uint32_t instruction) {
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
+    uint32_t Rt = get_Rd(instruction);
+    int64_t offset = (int64_t)(imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFFFFFFFE00000;
+    }
+    if (CURRENT_STATE.REGS[Rt] == 0){
+        NEXT_STATE.PC += offset;
+    } else{
+        NEXT_STATE.PC += 4;
+    }
+}
+
+void cbnz(uint32_t instruction) {
+    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
+    uint32_t Rt = get_Rd(instruction);
+    int64_t offset = (int64_t)(imm19 << 2);
+    if (imm19 & (1 << 18)) {
+        offset |= 0xFFFFFFFFFFE00000;
+    }
+    if (CURRENT_STATE.REGS[Rt] != 0){
+        NEXT_STATE.PC += offset;
+    } else{
+        NEXT_STATE.PC += 4;
+    }
+}
+
 void stur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
@@ -392,7 +420,11 @@ void logical_shift_immediate(uint32_t instruction){
 }
 
 void mul(uint32_t instruction){
-
+    uint32_t Rm = get_Rm(instruction);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] * CURRENT_STATE.REGS[Rm];
+    NEXT_STATE.PC += 4;
 }
 
 void bcond(uint32_t instruction){
@@ -478,6 +510,7 @@ void process_instruction(){
         case (0b11111000010) : printf("INST LDUR\n\n");                                          ldur(instruction); break;
         case (0b00111000010) : printf("INST LDURB\n\n");                                        ldurb(instruction); break;
         case (0b01111000010) : printf("INST LDURH\n\n");                                        ldurh(instruction); break;
+        case (0b10011011000) : printf("INST MUL\n\n");                                            mul(instruction); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
@@ -501,6 +534,8 @@ void process_instruction(){
             printf("INST BCOND\n\n");
             bcond(instruction);
             break;
+        case (0b10110100) : printf("INST CBZ\n\n");   cbz(instruction); break;
+        case (0b10110101) : printf("INST CBNZ\n\n"); cbnz(instruction); break;
     }
 
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_22)) {
