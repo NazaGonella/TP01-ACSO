@@ -320,7 +320,11 @@ void orr_shifted(uint32_t instruction) {
 }
 
 void b(uint32_t instruction) {
-    int offset=0;
+    uint32_t imm26 = get_instruction_bit_field(instruction, 26, 0);
+    int64_t offset = (int64_t)(imm26 << 2);
+    if (imm26 & (1 << 25)) {
+        offset |= 0xFFFFFFFFFC000000;
+    }
     NEXT_STATE.PC += offset;
 }
 
