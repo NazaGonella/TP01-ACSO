@@ -329,6 +329,20 @@ void ldurb(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
+void ldurh(uint32_t instruction) {
+    uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rt = get_Rd(instruction);
+    int64_t offset = (int64_t)(imm9);
+    if (imm9 & (1 << 8)) {
+        offset |= 0xFFFFFFFFFFFFFE00;
+    }
+    uint32_t mem_16 = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9) & 0b1111111111111111;                        // Agarro los primeros 16 bits
+    uint32_t mem_16_or_Rt = (NEXT_STATE.REGS[Rt] & (((1 << (16))-1)<<16)) | mem_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
+    NEXT_STATE.REGS[Rt] = mem_16_or_Rt;
+    NEXT_STATE.PC += 4;
+}
+
 void halt(uint32_t instruction) {
     RUN_BIT = 0;
     NEXT_STATE.PC += 4;
@@ -455,8 +469,10 @@ void process_instruction(){
         case (0b11010100010) : printf("INST HALT\n\n");                                          halt(instruction); break;
         case (0b11111000000) : printf("INST STUR\n\n");                                          stur(instruction); break;
         case (0b00111000000) : printf("INST STURB\n\n");                                        sturb(instruction); break;
+        case (0b01111000000) : printf("INST STURH\n\n");                                        sturh(instruction); break;
         case (0b11111000010) : printf("INST LDUR\n\n");                                          ldur(instruction); break;
-        case (0b00111000010) : printf("INST LDURB\n\n");                                         ldur(instruction); break;
+        case (0b00111000010) : printf("INST LDURB\n\n");                                        ldurb(instruction); break;
+        case (0b01111000010) : printf("INST LDURH\n\n");                                        ldurh(instruction); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
