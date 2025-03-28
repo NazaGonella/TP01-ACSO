@@ -518,10 +518,19 @@ void process_instruction(){
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_10)){
         case (0b1011000100) : printf("INST ADDS (immediate, shift '00')\n\n"); adds_immediate(instruction); break;
         case (0b1011000101) : printf("INST ADDS (immediate, shift '01')\n\n"); adds_immediate(instruction); break;
-        case (0b1111000100) : printf("INST SUBS (immediate, shift '00')\n\n"); subs_immediate(instruction); break;
+        case (0b1111000100) :
+            if (get_Rd(instruction) == 0b11111) {
+                printf("INST CMP (immediate, shift '00')\n\n");
+                cmp_immediate(instruction);
+            } else {
+                printf("INST SUBS (immediate, shift '00')\n\n");
+                subs_immediate(instruction);
+            } break;
+        // case (0b1111000100) : printf("INST SUBS (immediate, shift '00')\n\n"); subs_immediate(instruction); break;
         case (0b1111000101) : printf("INST SUBS (immediate, shift '01')\n\n"); subs_immediate(instruction); break;
         case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n");   add_immediate(instruction); break;
         case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n");   add_immediate(instruction); break;
+        // case (0b1111000100) : printf("INST CMP (immediate, shift '00')");       cmp_immediate(instruction); break;
         case (0b1101001101) : logical_shift_immediate(instruction); break;
     }
 
