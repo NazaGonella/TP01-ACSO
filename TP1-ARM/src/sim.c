@@ -188,7 +188,6 @@ void blt(uint32_t instruction) {
     }
 }
 
-// ESTA BIEN??
 void stur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
@@ -198,9 +197,6 @@ void stur(uint32_t instruction) {
         offset |= 0xFFFFFFFFFFFFFE00;
     }
     mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, CURRENT_STATE.REGS[Rt]);
-    // printf("imm9: %x\n", imm9);
-    // printf("Rn: %x\n", Rn);
-    // printf("Rt: %x\n", Rt);
     NEXT_STATE.PC += 4;
 }
 
@@ -212,10 +208,24 @@ void sturb(uint32_t instruction) {
     if (imm9 & (1 << 8)) {
         offset |= 0xFFFFFFFFFFFFFE00;
     }
-    uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;
+    uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;                        // Agarro los primeros 8 bits
     uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9);
-    uint32_t Rt_8_or = (mem & (((1 << (24))-1)<<8)) | Rt_8;
-    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, Rt_8_or);
+    uint32_t Rt_8_or_mem = (mem & (((1 << (24))-1)<<8)) | Rt_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
+    mem_write_32(CURRENT_STATE.REGS[Rn] + imm9, Rt_8_or_mem);
+    NEXT_STATE.PC += 4;
+}
+
+void ldur(uint32_t instruction) {
+    uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rt = get_Rd(instruction);
+    int64_t offset = (int64_t)(imm9);
+    if (imm9 & (1 << 8)) {
+        offset |= 0xFFFFFFFFFFFFFE00;
+    }
+    uint64_t lower = (uint64_t)mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
+    uint64_t upper = (uint64_t)mem_read_32(CURRENT_STATE.REGS[Rn] + offset + 4);
+    NEXT_STATE.REGS[Rt] = (upper << 32) | lower;
     NEXT_STATE.PC += 4;
 }
 
@@ -223,7 +233,6 @@ void halt(uint32_t instruction) {
     RUN_BIT = 0;
     NEXT_STATE.PC += 4;
 }
-
 
 void orr_shifted(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
@@ -284,7 +293,6 @@ Instruction instructions[] = {
     {"INST LSL (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST LSR (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST STUR", 0b11111000000, stur},
-    {"INST STUR", 0b10111000000, stur},
     {"INST STURB", 0b00111000000, stur},
     {"INST STURH", 0b01111000000,stur}, //cambiar
     {"INST LDUR", 0b11111000010,stur},
@@ -322,8 +330,8 @@ void process_instruction(){
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
         case (0b11010100010) : printf("INST HALT\n\n");                                          halt(instruction); break;
         case (0b11111000000) : printf("INST STUR\n\n");                                          stur(instruction); break;
-        case (0b10111000000) : printf("INST STUR\n\n");                                          stur(instruction); break;
         case (0b00111000000) : printf("INST STURB\n\n");                                        sturb(instruction); break;
+        case (0b11111000010) : printf("INST LDUR\n\n");                                         ldur(instruction); break;
     }
     // printf("INSTRUCTION: %x\n", instruction);
     // printf("OPCODE: %x\n", get_I_opcode(instruction));
