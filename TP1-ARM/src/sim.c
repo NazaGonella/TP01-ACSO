@@ -12,6 +12,11 @@
 #define OPCODE_INTERVAL_8 8, 24
 
 typedef struct {
+    int size;
+    int shift;
+} OpcodeInterval;
+
+typedef struct {
     const char *name;
     uint32_t opcode;
     void (*run)(uint32_t);
@@ -201,7 +206,7 @@ void beq(uint32_t instruction) {
     if (imm19 & (1 << 18)) {
         offset |= 0xFFFFFFFFFFE00000;
     }
-    printf("%ld\n", offset);
+    // printf("%ld\n", offset);
     if (CURRENT_STATE.FLAG_Z == 1) {
         NEXT_STATE.PC += offset;
     } else{
@@ -455,40 +460,6 @@ void bcond(uint32_t instruction){
     }
 }
 
-
-// Instruction instructions[] = {
-//     {"INST ADDS (extended register)", 0b10101011000, adds_extended},
-//     {"INST ADDS (immediate, shift 00)", 0b1011000100, adds_immediate},
-//     {"INST ADDS (immediate, shift 01)", 0b1011000101, adds_immediate},
-//     {"INST SUBS (extended register)",0b11101011000, subs_extended},     //hacer funcion en comun para subs extended y cmp extended
-//     {"INST SUBS (immediate, shift 00)", 0b1111000100, subs_immediate},
-//     {"INST SUBS (immediate, shift 01)", 0b1111000101, subs_immediate},
-//     {"INST HLT", 0b11010100010, halt},
-//     {"INST CMP (extended register)", 0b11101011000,cmp_extended},
-//     {"INST CMP (immediate, shift 00)", 0b1111000100, cmp_immediate},
-//     {"INST ANDS (shifted register, shift '00')", 0b11010010100, ands_shifted},
-//     {"INST EOR (shifted register, shift '00')", 0b11001010000, eor_shifted},
-//     {"INST ORR (shifted register, shift '00')",0b10101010000,orr_shifted},
-//     {"INST B", 0b01010100, b},
-//     {"INST BR", 0b01010100, br},
-//     {"INST BCOND", 0b01010100, bcond},
-//     {"INST LSL (immediate)", 0b1101001101, logical_shift_immediate},
-//     {"INST LSR (immediate)", 0b1101001101, logical_shift_immediate},
-//     {"INST STUR", 0b11111000000, stur},
-//     {"INST STURB", 0b00111000000, sturb},
-//     {"INST STURH", 0b01111000000,sturh}, //cambiar
-//     {"INST LDUR", 0b11111000010,ldur},
-//     {"INST LDURH",0b01111000010,ldurh},
-//     {"INST LDURB", 0b00111000010,ldurb},
-//     {"INST MOVZ", 0b11010010100, movz},
-//     {"INST ADD (immediate, shift '00')", 0b1001000100, add_immediate},
-//     {"INST ADD (immediate, shift '01')", 0b1001000101, add_immediate},
-//     {"INST ADD (extended register)",0b1001000100, add_extended},
-//     {"INST MUL", 0b10011011000, mul},
-//     {"INST CBZ", 0b10101011001, cbz},
-//     {"INST CBNZ", 0b11101011001, cbnz},
-// };
-
 Instruction instructions[] = {
     {"INST ADDS (extended register)", 0b10101011000, adds_extended},
     {"INST ADDS (immediate, shift 00)", 0b1011000100, adds_immediate},
@@ -520,71 +491,30 @@ Instruction instructions[] = {
     {"INST CBNZ", 0b11101011001, cbnz},
 };
 
+OpcodeInterval opcode_intervals[] = {
+    {.size=11, .shift=21},
+    {.size=10, .shift=22},
+    {.size=22, .shift=10},
+    {.size=6, .shift=26},
+    {.size=8, .shift=24},
+};
+
+#define NUM_INTERVALS (sizeof(opcode_intervals) / sizeof(opcode_intervals[0]))
+#define NUM_INSTRUCTIONS    (sizeof(instructions) / sizeof(instructions[0]))
 
 void process_instruction(){
-    uint32_t instruction = mem_read_32(CURRENT_STATE.PC);
-    printf("INSTRUCTION: %x\n", instruction);
-    // switch(get_R_opcode(instruction)){
-    // switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_11)){
-    //     case (0b10101011000) : printf("INST ADDS (extended register)\n\n");             adds_extended(instruction); break;
-    //     case (0b11101011000) :
-    //         if (get_Rd(instruction) == 0b11111) {
-    //             printf("INST CMP (extended register)\n\n");
-    //             cmp_extended(instruction);
-    //         } else {
-    //             printf("INST SUBS (extended register)\n\n");
-    //             subs_extended(instruction);
-    //         } break;
-    //     case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");   ands_shifted(instruction); break;
-    //     case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n");     eor_shifted(instruction); break;
-    //     case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n");     orr_shifted(instruction); break;
-    //     case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n");                                movz(instruction); break;
-    //     case (0b10001011001) : printf("INST ADD (extended register)\n\n");               add_extended(instruction); break;
-    //     case (0b11010100010) : printf("INST HALT\n\n");                                          halt(instruction); break;
-    //     case (0b11111000000) : printf("INST STUR\n\n");                                          stur(instruction); break;
-    //     case (0b00111000000) : printf("INST STURB\n\n");                                        sturb(instruction); break;
-    //     case (0b01111000000) : printf("INST STURH\n\n");                                        sturh(instruction); break;
-    //     case (0b11111000010) : printf("INST LDUR\n\n");                                          ldur(instruction); break;
-    //     case (0b00111000010) : printf("INST LDURB\n\n");                                        ldurb(instruction); break;
-    //     case (0b01111000010) : printf("INST LDURH\n\n");                                        ldurh(instruction); break;
-    //     case (0b10011011000) : printf("INST MUL\n\n");                                            mul(instruction); break;
-    // }
-    // // printf("INSTRUCTION: %x\n", instruction);
-    // // printf("OPCODE: %x\n", get_I_opcode(instruction));
-    // // switch(get_I_opcode(instruction)){
-    // switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_10)){
-    //     case (0b1011000100) : printf("INST ADDS (immediate, shift '00')\n\n"); adds_immediate(instruction); break;
-    //     case (0b1011000101) : printf("INST ADDS (immediate, shift '01')\n\n"); adds_immediate(instruction); break;
-    //     case (0b1111000100) :
-    //         if (get_Rd(instruction) == 0b11111) {
-    //             printf("INST CMP (immediate, shift '00')\n\n");
-    //             cmp_immediate(instruction);
-    //         } else {
-    //             printf("INST SUBS (immediate, shift '00')\n\n");
-    //             subs_immediate(instruction);
-    //         } break;
-    //     // case (0b1111000100) : printf("INST SUBS (immediate, shift '00')\n\n"); subs_immediate(instruction); break;
-    //     case (0b1111000101) : printf("INST SUBS (immediate, shift '01')\n\n"); subs_immediate(instruction); break;
-    //     case (0b1001000100) : printf("INST ADD (immediate, shift '00')\n\n");   add_immediate(instruction); break;
-    //     case (0b1001000101) : printf("INST ADD (immediate, shift '01')\n\n");   add_immediate(instruction); break;
-    //     // case (0b1111000100) : printf("INST CMP (immediate, shift '00')");       cmp_immediate(instruction); break;
-    //     case (0b1101001101) : logical_shift_immediate(instruction); break;
-    // }
+    uint32_t whole_instruction = mem_read_32(CURRENT_STATE.PC);
+    printf("INSTRUCTION: %x\n", whole_instruction);
 
-    // switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_6)) {
-    //     case (0b000101) : printf("INST B\n\n");                                              b(instruction); break;
-    // }
-
-    // switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_8)){
-    //     case (0b01010100) :
-    //         printf("INST BCOND\n\n");
-    //         bcond(instruction);
-    //         break;
-    //     case (0b10110100) : printf("INST CBZ\n\n");   cbz(instruction); break;
-    //     case (0b10110101) : printf("INST CBNZ\n\n"); cbnz(instruction); break;
-    // }
-
-    // switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_22)) {
-    //     case (0b1101011000011111000000) : printf("INST BR\n\n");                            br(instruction); break;
-    // }
+    for (int i = 0; i < NUM_INSTRUCTIONS; i++){
+        Instruction instruction = instructions[i];
+        for (int j = 0; j < NUM_INTERVALS; j++){
+            OpcodeInterval opcode_interval = opcode_intervals[j];
+            uint32_t opcode = get_instruction_bit_field(whole_instruction, opcode_interval.size, opcode_interval.shift);
+            if (opcode == instruction.opcode){
+                instruction.run(whole_instruction);
+                printf("%s\n\n", instruction.name);
+            }
+        }
+    }
 }
