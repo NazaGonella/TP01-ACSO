@@ -7,8 +7,8 @@
 
 #define OPCODE_INTERVAL_11 11, 21
 #define OPCODE_INTERVAL_10 10, 22
-#define OPCODE_INTERVAL_C 22, 10
-#define OPCODE_INTERVAL_D 6, 26
+#define OPCODE_INTERVAL_22 22, 10
+#define OPCODE_INTERVAL_6 6, 26
 #define OPCODE_INTERVAL_8 8, 24
 
 typedef struct {
@@ -416,10 +416,9 @@ void process_instruction(){
                 printf("INST SUBS (extended register)\n\n");
                 subs_extended(instruction);
             } break;
-        case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");  ands_shifted(instruction); break;
-        case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n");    eor_shifted
-    (instruction); break;
-        case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n"); break;
+        case (0b11101010000) : printf("INST ANDS (shifted register, shift '00')\n\n");   ands_shifted(instruction); break;
+        case (0b11001010000) : printf("INST EOR (shifted register, shift '00')\n\n");     eor_shifted(instruction); break;
+        case (0b10101010000) : printf("INST ORR (shifted register, shift '00')\n\n");     orr_shifted(instruction); break;
         case (0b11010010100) : printf("INST MOVZ (hw '00')\n\n");                                movz(instruction); break;
         case (0b10001011001) : printf("INST ADD (extended register)\n\n"); break;
         case (0b11010100010) : printf("INST HALT\n\n");                                          halt(instruction); break;
@@ -441,10 +440,18 @@ void process_instruction(){
         case (0b1101001101) : printf("INST LSL (immediate)\n\n"); logical_shift_left_immediate(instruction); break;
     }
 
+    switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_6)) {
+        case (0b000101) : printf("INST B\n\n");                                              b(instruction); break;
+    }
+
     switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_8)){
         case (0b01010100) :
             printf("INST BCOND\n\n");
             bcond(instruction);
             break;
+    }
+
+    switch (get_instruction_bit_field(instruction, OPCODE_INTERVAL_22)) {
+        case (0b1101011000011111000000) : printf("INST BR\n\n");                            br(instruction); break;
     }
 }
