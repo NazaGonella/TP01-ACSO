@@ -478,7 +478,7 @@ Instruction instructions[] = {
     {"INST LSR (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST STUR", 0b11111000000, stur},
     {"INST STURB", 0b00111000000, sturb},
-    {"INST STURH", 0b01111000000,sturh}, //cambiar
+    {"INST STURH", 0b01111000000,sturh},
     {"INST LDUR", 0b11111000010,ldur},
     {"INST LDURH",0b01111000010,ldurh},
     {"INST LDURB", 0b00111000010,ldurb},

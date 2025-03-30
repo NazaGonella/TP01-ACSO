@@ -1,0 +1,4 @@
+fijarse que los opcodes en la lista están bien
+refactorizar mas
+testear instrucciones que vienen en los tests
+testear instrucciones que no vienen en los tests
