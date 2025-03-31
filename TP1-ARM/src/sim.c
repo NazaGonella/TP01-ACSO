@@ -108,10 +108,7 @@ void subs_cmp_immediate(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     int64_t result = CURRENT_STATE.REGS[Rn] - imm12;
-    if (Rd == 0b11111) {
-        printf("INST CMP (immediate, shift '00')\n\n");
-    } else {
-        printf("INST SUBS (immediate, shift '00')\n\n");
+    if (Rd != 0b11111) {
         NEXT_STATE.REGS[Rd] = result;
     }
     update_flags(result);
@@ -123,50 +120,38 @@ void subs_cmp_extended(uint32_t instruction) {
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
     int64_t result = CURRENT_STATE.REGS[Rn] - CURRENT_STATE.REGS[Rm];
-    if (Rd == 0b11111) {
-        printf("INST CMP (extended register)\n\n");
-    } else {
-        printf("INST SUBS (extended register)\n\n");
+    if (Rd != 0b11111) {
         NEXT_STATE.REGS[Rd] = result;
     }
     update_flags(result);
     NEXT_STATE.PC += 4;
 }
 
-void cmp_extended(uint32_t instruction) {
+void execute_bitwise(uint32_t instruction, char op) {
     uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] - CURRENT_STATE.REGS[Rm];
-    // NEXT_STATE.REGS[31] = result;
-    update_flags(result);
-    NEXT_STATE.PC += 4;
-}
-
-void cmp_immediate(uint32_t instruction){
-    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-    uint32_t Rn = get_Rn(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] - imm12;
-    // NEXT_STATE.REGS[31] = result;
-    update_flags(result);
+    int64_t result;
+    switch (op) {
+        case '&': result = CURRENT_STATE.REGS[Rn] & CURRENT_STATE.REGS[Rm]; break;
+        case '^': result = CURRENT_STATE.REGS[Rn] ^ CURRENT_STATE.REGS[Rm]; break;
+        case '|': result = CURRENT_STATE.REGS[Rn] | CURRENT_STATE.REGS[Rm]; break;
+        default: return;
+    }
+    NEXT_STATE.REGS[Rd] = result;
     NEXT_STATE.PC += 4;
 }
 
 void ands_shifted(uint32_t instruction) {
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    uint32_t Rm = get_Rm(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] & CURRENT_STATE.REGS[Rm];
-    NEXT_STATE.REGS[Rd] = result;
-    NEXT_STATE.PC += 4;
+    execute_bitwise(instruction, '&');
 }
 
 void eor_shifted(uint32_t instruction) {
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    uint32_t Rm = get_Rm(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] ^ CURRENT_STATE.REGS[Rm];
-    NEXT_STATE.REGS[Rd] = result;
-    NEXT_STATE.PC += 4;
+    execute_bitwise(instruction, '^');
+}
+
+void orr_shifted(uint32_t instruction) {
+    execute_bitwise(instruction, '|');
 }
 
 void logical_shift_left_immediate(uint32_t instruction) {
@@ -185,6 +170,17 @@ void logical_shift_right_immediate(uint32_t instruction) {
     // printf("IMMR: %x", immr);
     NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] >> immr;
     NEXT_STATE.PC += 4;
+}
+
+void logical_shift_immediate(uint32_t instruction){
+    uint32_t imms = get_instruction_bit_field(instruction, 6, 10);
+    if (imms == 0b111111 || imms == 0b011111){
+        printf("INST LSR (immediate)\n\n");
+        logical_shift_right_immediate(instruction);
+    } else {
+        printf("INST LSL (immediate)\n\n");
+        logical_shift_left_immediate(instruction);
+    }
 }
 
 void movz(uint32_t instruction) {
@@ -390,15 +386,6 @@ void halt(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-void orr_shifted(uint32_t instruction) {
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    uint32_t Rm = get_Rm(instruction);
-    int64_t result= CURRENT_STATE.REGS[Rn] | CURRENT_STATE.REGS[Rm];
-    NEXT_STATE.REGS[Rd] = result;
-    NEXT_STATE.PC += 4;
-}
-
 void b(uint32_t instruction) {
     uint32_t imm26 = get_instruction_bit_field(instruction, 26, 0);
     int64_t offset = (int64_t)(imm26 << 2);
@@ -411,17 +398,6 @@ void b(uint32_t instruction) {
 void br(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     NEXT_STATE.PC = CURRENT_STATE.REGS[Rn];
-}
-
-void logical_shift_immediate(uint32_t instruction){
-    uint32_t imms = get_instruction_bit_field(instruction, 6, 10);
-    if (imms == 0b111111 || imms == 0b011111){
-        printf("INST LSR (immediate)\n\n");
-        logical_shift_right_immediate(instruction);
-    } else {
-        printf("INST LSL (immediate)\n\n");
-        logical_shift_left_immediate(instruction);
-    }
 }
 
 void mul(uint32_t instruction){
