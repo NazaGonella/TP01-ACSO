@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
@@ -154,33 +155,19 @@ void orr_shifted(uint32_t instruction) {
     execute_bitwise(instruction, '|');
 }
 
-void logical_shift_left_immediate(uint32_t instruction) {
-    uint32_t immr = 64 - get_instruction_bit_field(instruction, 6, 16);
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    // printf("IMMR: %x", immr);
-    NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
-    NEXT_STATE.PC += 4;
-}
-
-void logical_shift_right_immediate(uint32_t instruction) {
-    uint32_t immr = get_instruction_bit_field(instruction, 6, 16);
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    // printf("IMMR: %x", immr);
-    NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] >> immr;
-    NEXT_STATE.PC += 4;
-}
-
 void logical_shift_immediate(uint32_t instruction){
+    uint32_t immr;
     uint32_t imms = get_instruction_bit_field(instruction, 6, 10);
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
     if (imms == 0b111111 || imms == 0b011111){
-        printf("INST LSR (immediate)\n\n");
-        logical_shift_right_immediate(instruction);
+        immr = get_instruction_bit_field(instruction, 6, 16);
+        NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] >> immr;
     } else {
-        printf("INST LSL (immediate)\n\n");
-        logical_shift_left_immediate(instruction);
+        immr = 64 - get_instruction_bit_field(instruction, 6, 16);
+        NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
     }
+    NEXT_STATE.PC += 4;
 }
 
 void movz(uint32_t instruction) {
