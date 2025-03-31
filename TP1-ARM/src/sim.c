@@ -127,7 +127,7 @@ void subs_cmp_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-void bitwise_operation(uint32_t instruction, char op) {
+int64_t bitwise_operation(uint32_t instruction, char op) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
@@ -136,14 +136,16 @@ void bitwise_operation(uint32_t instruction, char op) {
         case '&': result = CURRENT_STATE.REGS[Rn] & CURRENT_STATE.REGS[Rm]; break;
         case '^': result = CURRENT_STATE.REGS[Rn] ^ CURRENT_STATE.REGS[Rm]; break;
         case '|': result = CURRENT_STATE.REGS[Rn] | CURRENT_STATE.REGS[Rm]; break;
-        default: return;
+        default: return 1;
     }
     NEXT_STATE.REGS[Rd] = result;
     NEXT_STATE.PC += 4;
+    return result;
 }
 
 void ands_shifted(uint32_t instruction) {
-    bitwise_operation(instruction, '&');
+    int64_t result = bitwise_operation(instruction, '&');
+    update_flags(result);
 }
 
 void eor_shifted(uint32_t instruction) {
@@ -160,9 +162,11 @@ void logical_shift_immediate(uint32_t instruction){
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     if (imms == 0b111111 || imms == 0b011111){
+        printf("R\n");
         immr = get_instruction_bit_field(instruction, 6, 16);
         NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] >> immr;
     } else {
+        printf("L\n");
         immr = 64 - get_instruction_bit_field(instruction, 6, 16);
         NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
     }
@@ -234,10 +238,12 @@ void sturb(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
     int64_t offset = sign_extend(imm9, 9);
-    uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;                        // Agarro los primeros 8 bits
-    uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
-    uint32_t Rt_8_or_mem = (mem & (((1 << (24))-1)<<8)) | Rt_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
-    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_8_or_mem);
+    // uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;                        // Agarro los primeros 8 bits
+    // uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
+    // uint32_t Rt_8_or_mem = (mem & (((1 << (24))-1)<<8)) | Rt_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
+    // mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_8_or_mem);
+    uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0xFF;
+    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_8);
     NEXT_STATE.PC += 4;
 }
 
@@ -246,10 +252,12 @@ void sturh(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
     int64_t offset = sign_extend(imm9, 9);
-    uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0b1111111111111111;                        // Agarro los primeros 16 bits
-    uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
-    uint32_t Rt_16_or_mem = (mem & (((1 << (16))-1)<<16)) | Rt_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
-    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_16_or_mem);
+    // uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0b1111111111111111;                        // Agarro los primeros 16 bits
+    // uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
+    // uint32_t Rt_16_or_mem = (mem & (((1 << (16))-1)<<16)) | Rt_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
+    // mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_16_or_mem);
+    uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0xFFFF;
+    mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_16);
     NEXT_STATE.PC += 4;
 }
 
@@ -269,9 +277,8 @@ void ldurb(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
     int64_t offset = sign_extend(imm9, 9);
-    uint32_t mem_8 = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9) & 0b11111111;                        // Agarro los primeros 8 bits
-    uint32_t mem_8_or_Rt = (NEXT_STATE.REGS[Rt] & (((1 << (24))-1)<<8)) | mem_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
-    NEXT_STATE.REGS[Rt] = mem_8_or_Rt;
+    uint32_t mem_8 = mem_read_32(CURRENT_STATE.REGS[Rn] + offset) & 0xFF;                        // Agarro los primeros 8 bits
+    NEXT_STATE.REGS[Rt] = mem_8;
     NEXT_STATE.PC += 4;
 }
 
@@ -280,9 +287,8 @@ void ldurh(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
     int64_t offset = sign_extend(imm9, 9);
-    uint32_t mem_16 = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9) & 0b1111111111111111;                        // Agarro los primeros 16 bits
-    uint32_t mem_16_or_Rt = (NEXT_STATE.REGS[Rt] & (((1 << (16))-1)<<16)) | mem_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
-    NEXT_STATE.REGS[Rt] = mem_16_or_Rt;
+    uint32_t mem_16 = mem_read_32(CURRENT_STATE.REGS[Rn] + offset) & 0xFFFF;                        // Agarro los primeros 16 bits
+    NEXT_STATE.REGS[Rt] = mem_16;
     NEXT_STATE.PC += 4;
 }
 
@@ -358,8 +364,8 @@ Instruction instructions[] = {
     {"INST ADD (immediate, shift '01')", 0b1001000101, add_immediate},
     {"INST ADD (extended register)",0b10001011000, add_extended},
     {"INST MUL", 0b10011011000, mul},
-    {"INST CBZ", 0b10101011001, cbz},
-    {"INST CBNZ", 0b11101011001, cbnz},
+    {"INST CBZ", 0b10110100, cbz},
+    {"INST CBNZ", 0b10110101, cbnz},
 };
 
 OpcodeInterval opcode_intervals[] = {
