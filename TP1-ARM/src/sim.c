@@ -22,14 +22,12 @@ uint32_t create_bit_mask(int size, int shift) {
 }
 
 uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift) {
-    // uint32_t bit_mask = ((1 << (size))-1)<<shift;
     uint32_t bit_mask = create_bit_mask(size, shift);
     return (instruction & bit_mask) >> shift;
 }
 
 uint32_t get_Rn(uint32_t instruction) {
     return get_instruction_bit_field(instruction, 5, 5);
-    // return get_instruction_bit_field(instruction, BIT_MASK_INTERVAL);
 }
 
 uint32_t get_Rd(uint32_t instruction) {
@@ -129,7 +127,7 @@ void subs_cmp_extended(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-void execute_bitwise(uint32_t instruction, char op) {
+void bitwise_operation(uint32_t instruction, char op) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     uint32_t Rm = get_Rm(instruction);
@@ -145,15 +143,15 @@ void execute_bitwise(uint32_t instruction, char op) {
 }
 
 void ands_shifted(uint32_t instruction) {
-    execute_bitwise(instruction, '&');
+    bitwise_operation(instruction, '&');
 }
 
 void eor_shifted(uint32_t instruction) {
-    execute_bitwise(instruction, '^');
+    bitwise_operation(instruction, '^');
 }
 
 void orr_shifted(uint32_t instruction) {
-    execute_bitwise(instruction, '|');
+    bitwise_operation(instruction, '|');
 }
 
 void logical_shift_immediate(uint32_t instruction){
@@ -358,7 +356,7 @@ Instruction instructions[] = {
     {"INST MOVZ", 0b11010010100, movz},
     {"INST ADD (immediate, shift '00')", 0b1001000100, add_immediate},
     {"INST ADD (immediate, shift '01')", 0b1001000101, add_immediate},
-    {"INST ADD (extended register)",0b10001011001, add_extended},
+    {"INST ADD (extended register)",0b10001011000, add_extended},
     {"INST MUL", 0b10011011000, mul},
     {"INST CBZ", 0b10101011001, cbz},
     {"INST CBNZ", 0b11101011001, cbnz},
