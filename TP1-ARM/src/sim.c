@@ -23,8 +23,13 @@ typedef struct {
 } Instruction;
 
 
+uint32_t create_bit_mask(int size, int shift) {
+    return ((1 << (size))-1)<<shift;
+}
+
 uint32_t get_instruction_bit_field(uint32_t instruction, int size, int shift) {
-    uint32_t bit_mask = ((1 << (size))-1)<<shift;
+    // uint32_t bit_mask = ((1 << (size))-1)<<shift;
+    uint32_t bit_mask = create_bit_mask(size, shift);
     return (instruction & bit_mask) >> shift;
 }
 
@@ -50,60 +55,49 @@ int is_shifted(uint32_t instruction) {
 }
 
 void update_flags(int64_t result) {
-    if (result == 0) {
-        NEXT_STATE.FLAG_Z = 1;
-        NEXT_STATE.FLAG_N = 0;
-    } else if (result > 0) {
-        NEXT_STATE.FLAG_Z = 0;
-        NEXT_STATE.FLAG_N = 0;
-    } else if (result < 0) {
-        NEXT_STATE.FLAG_Z = 0;
-        NEXT_STATE.FLAG_N = 1;
+    NEXT_STATE.FLAG_Z = (result == 0);
+    NEXT_STATE.FLAG_N = (result < 0);
+}
+
+int64_t add_immediate_base(uint32_t instruction) {
+    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
+    if (is_shifted(instruction)){
+        imm12 = imm12 << 12;
     }
+    uint32_t Rn = get_Rn(instruction);
+    uint32_t Rd = get_Rd(instruction);
+    int64_t result = CURRENT_STATE.REGS[Rn] + imm12;
+    NEXT_STATE.REGS[Rd] = result;
+    NEXT_STATE.PC += 4;
+    return result;
 }
 
 void adds_immediate(uint32_t instruction) {
-    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-    if (is_shifted(instruction)){
-        imm12 = imm12 << 12;
-    }
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] + imm12;
-    NEXT_STATE.REGS[Rd] = result;
+    int64_t result = add_immediate_base(instruction);
     update_flags(result);
-    NEXT_STATE.PC += 4;
 }
 
 void add_immediate(uint32_t instruction) {
-    uint32_t imm12 = get_instruction_bit_field(instruction, 12, 10);
-    if (is_shifted(instruction)){
-        imm12 = imm12 << 12;
-    }
+    add_immediate_base(instruction);
+}
+
+int64_t add_extended_base(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] + imm12;
+    uint32_t Rm = get_Rm(instruction);
+    int64_t result = CURRENT_STATE.REGS[Rn] + CURRENT_STATE.REGS[Rm];
     NEXT_STATE.REGS[Rd] = result;
     NEXT_STATE.PC += 4;
+    return result;
 }
 
 void adds_extended(uint32_t instruction) {
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    uint32_t Rm = get_Rm(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] + CURRENT_STATE.REGS[Rm];
-    NEXT_STATE.REGS[Rd] = result;
+    int64_t result = add_extended_base(instruction);
     update_flags(result);
-    NEXT_STATE.PC += 4;
 }
 
 void add_extended(uint32_t instruction){
-    uint32_t Rn = get_Rn(instruction);
-    uint32_t Rd = get_Rd(instruction);
-    uint32_t Rm = get_Rm(instruction);
-    int64_t result = CURRENT_STATE.REGS[Rn] + CURRENT_STATE.REGS[Rm];
-    NEXT_STATE.REGS[Rd] = result;
-    NEXT_STATE.PC += 4;
+    add_extended_base(instruction);
 }
 
 void subs_cmp_immediate(uint32_t instruction) {
