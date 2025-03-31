@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
@@ -177,111 +176,51 @@ void movz(uint32_t instruction) {
     NEXT_STATE.PC += 4;
 }
 
-void beq(uint32_t instruction) {
+void conditional_branch(uint32_t instruction, int branch_cond) {
     uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
     int64_t offset = (int64_t)(imm19 << 2);
     if (imm19 & (1 << 18)) {
         offset |= 0xFFFFFFFFFFE00000;
     }
-    // printf("%ld\n", offset);
-    if (CURRENT_STATE.FLAG_Z == 1) {
+    if (branch_cond){
         NEXT_STATE.PC += offset;
     } else{
         NEXT_STATE.PC += 4;
     }
+}
+
+void beq(uint32_t instruction) {
+    conditional_branch(instruction, CURRENT_STATE.FLAG_Z == 1);
 }
 
 void blt(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (CURRENT_STATE.FLAG_N == 1) {
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, CURRENT_STATE.FLAG_N == 1);
 }
 
 void ble(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (!(CURRENT_STATE.FLAG_Z == 1 || CURRENT_STATE.FLAG_N == 0)) {
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, !(CURRENT_STATE.FLAG_Z == 1 || CURRENT_STATE.FLAG_N == 0));
 }
 
 void bne(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (CURRENT_STATE.FLAG_Z == 0) {
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, CURRENT_STATE.FLAG_Z == 0);
 }
 
 void bge(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (CURRENT_STATE.FLAG_N == 0) {
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, CURRENT_STATE.FLAG_N == 0);
 }
 
 void bgt(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (CURRENT_STATE.FLAG_Z == 0 && CURRENT_STATE.FLAG_N == 0) {
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, CURRENT_STATE.FLAG_Z == 0 && CURRENT_STATE.FLAG_N == 0);
 }
 
 void cbz(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (CURRENT_STATE.REGS[Rt] == 0){
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, CURRENT_STATE.REGS[Rt] == 0);
 }
 
 void cbnz(uint32_t instruction) {
-    uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
-    if (CURRENT_STATE.REGS[Rt] != 0){
-        NEXT_STATE.PC += offset;
-    } else{
-        NEXT_STATE.PC += 4;
-    }
+    conditional_branch(instruction, CURRENT_STATE.REGS[Rt] != 0);
 }
 
 void stur(uint32_t instruction) {
