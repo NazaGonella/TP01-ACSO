@@ -5,12 +5,6 @@
 #include <inttypes.h>
 #include "shell.h"
 
-#define OPCODE_INTERVAL_11 11, 21
-#define OPCODE_INTERVAL_10 10, 22
-#define OPCODE_INTERVAL_22 22, 10
-#define OPCODE_INTERVAL_6 6, 26
-#define OPCODE_INTERVAL_8 8, 24
-
 typedef struct {
     int size;
     int shift;
@@ -57,6 +51,14 @@ int is_shifted(uint32_t instruction) {
 void update_flags(int64_t result) {
     NEXT_STATE.FLAG_Z = (result == 0);
     NEXT_STATE.FLAG_N = (result < 0);
+}
+
+int64_t sign_extend(uint32_t bit_field, int size) {
+    int64_t offset = (int64_t) bit_field;
+    if (bit_field & (1 << (size - 1))) {
+        offset |= ((int64_t)-1 << size);
+    }
+    return offset;
 }
 
 int64_t add_immediate_base(uint32_t instruction) {
@@ -178,10 +180,7 @@ void movz(uint32_t instruction) {
 
 void conditional_branch(uint32_t instruction, int branch_cond) {
     uint32_t imm19 = get_instruction_bit_field(instruction, 19, 5);
-    int64_t offset = (int64_t)(imm19 << 2);
-    if (imm19 & (1 << 18)) {
-        offset |= 0xFFFFFFFFFFE00000;
-    }
+    int64_t offset = sign_extend(imm19 << 2, 19);
     if (branch_cond){
         NEXT_STATE.PC += offset;
     } else{
@@ -227,10 +226,7 @@ void stur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm9);
-    if (imm9 & (1 << 8)) {
-        offset |= 0xFFFFFFFFFFFFFE00;
-    }
+    int64_t offset = sign_extend(imm9, 9);
     mem_write_32(CURRENT_STATE.REGS[Rn] + offset, CURRENT_STATE.REGS[Rt]);
     NEXT_STATE.PC += 4;
 }
@@ -239,10 +235,7 @@ void sturb(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm9);
-    if (imm9 & (1 << 8)) {
-        offset |= 0xFFFFFFFFFFFFFE00;
-    }
+    int64_t offset = sign_extend(imm9, 9);
     uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;                        // Agarro los primeros 8 bits
     uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
     uint32_t Rt_8_or_mem = (mem & (((1 << (24))-1)<<8)) | Rt_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
@@ -254,10 +247,7 @@ void sturh(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm9);
-    if (imm9 & (1 << 8)) {
-        offset |= 0xFFFFFFFFFFFFFE00;
-    }
+    int64_t offset = sign_extend(imm9, 9);
     uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0b1111111111111111;                        // Agarro los primeros 16 bits
     uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
     uint32_t Rt_16_or_mem = (mem & (((1 << (16))-1)<<16)) | Rt_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
@@ -269,10 +259,7 @@ void ldur(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm9);
-    if (imm9 & (1 << 8)) {
-        offset |= 0xFFFFFFFFFFFFFE00;
-    }
+    int64_t offset = sign_extend(imm9, 9);
     uint64_t lower = (uint64_t)mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
     uint64_t upper = (uint64_t)mem_read_32(CURRENT_STATE.REGS[Rn] + offset + 4);
     NEXT_STATE.REGS[Rt] = (upper << 32) | lower;
@@ -283,10 +270,7 @@ void ldurb(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm9);
-    if (imm9 & (1 << 8)) {
-        offset |= 0xFFFFFFFFFFFFFE00;
-    }
+    int64_t offset = sign_extend(imm9, 9);
     uint32_t mem_8 = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9) & 0b11111111;                        // Agarro los primeros 8 bits
     uint32_t mem_8_or_Rt = (NEXT_STATE.REGS[Rt] & (((1 << (24))-1)<<8)) | mem_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
     NEXT_STATE.REGS[Rt] = mem_8_or_Rt;
@@ -297,10 +281,7 @@ void ldurh(uint32_t instruction) {
     uint32_t imm9 = get_instruction_bit_field(instruction, 9, 12);
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
-    int64_t offset = (int64_t)(imm9);
-    if (imm9 & (1 << 8)) {
-        offset |= 0xFFFFFFFFFFFFFE00;
-    }
+    int64_t offset = sign_extend(imm9, 9);
     uint32_t mem_16 = mem_read_32(CURRENT_STATE.REGS[Rn] + imm9) & 0b1111111111111111;                        // Agarro los primeros 16 bits
     uint32_t mem_16_or_Rt = (NEXT_STATE.REGS[Rt] & (((1 << (16))-1)<<16)) | mem_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
     NEXT_STATE.REGS[Rt] = mem_16_or_Rt;
@@ -314,10 +295,7 @@ void halt(uint32_t instruction) {
 
 void b(uint32_t instruction) {
     uint32_t imm26 = get_instruction_bit_field(instruction, 26, 0);
-    int64_t offset = (int64_t)(imm26 << 2);
-    if (imm26 & (1 << 25)) {
-        offset |= 0xFFFFFFFFFC000000;
-    }
+    int64_t offset = sign_extend(imm26 << 2, 26);
     NEXT_STATE.PC += offset;
 }
 
@@ -370,8 +348,7 @@ Instruction instructions[] = {
     {"INST B", 0b000101, b},
     {"INST BR", 0b1101011000011111000000, br},
     {"INST BCOND", 0b01010100, bcond},
-    {"INST LSL (immediate)", 0b1101001101, logical_shift_immediate},
-    {"INST LSR (immediate)", 0b1101001101, logical_shift_immediate},
+    {"INST LS (immediate)", 0b1101001101, logical_shift_immediate},
     {"INST STUR", 0b11111000000, stur},
     {"INST STURB", 0b00111000000, sturb},
     {"INST STURH", 0b01111000000,sturh},
