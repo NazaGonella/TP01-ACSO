@@ -308,24 +308,25 @@ void mul(uint32_t instruction){
 }
 
 void bcond(uint32_t instruction){
-    if (get_cond(instruction) == 0b0000) {
-        // printf("INST BEQ\n\n");
-        beq(instruction);
-    } else if (get_cond(instruction) == 0b1011) {
-        // printf("INST BLT\n\n");
-        blt(instruction);
-    } else if (get_cond(instruction) == 0b0001){
-        // printf("INST BNE");
-        bne(instruction);
-    } else if (get_cond(instruction) == 0b1100) {
-        // printf("INST BGT");
-        bgt(instruction);
-    } else if (get_cond(instruction) == 0b1010) {
-        // printf("INST BGE");
-        bge(instruction);
-    } else if (get_cond(instruction) == 0b1101) {
-        // printf("INST BLE");
-        ble(instruction);
+    switch (get_cond(instruction)) {
+        case (0b0000):
+            beq(instruction);
+            break;
+        case (0b1011):
+            blt(instruction);
+            break;
+        case (0b0001):
+            bne(instruction);
+            break;
+        case (0b1100):
+            bgt(instruction);
+            break;
+        case (0b1010):
+            bge(instruction);
+            break;
+        case (0b1101):
+            ble(instruction);
+            break;
     }
 }
 
