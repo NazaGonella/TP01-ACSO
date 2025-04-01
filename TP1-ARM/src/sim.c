@@ -161,11 +161,11 @@ void logical_shift_immediate(uint32_t instruction){
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rd = get_Rd(instruction);
     if (imms == 0b111111 || imms == 0b011111){
-        printf("R\n");
+        // printf("R\n");
         immr = get_instruction_bit_field(instruction, 6, 16);
         NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] >> immr;
     } else {
-        printf("L\n");
+        // printf("L\n");
         immr = 64 - get_instruction_bit_field(instruction, 6, 16);
         NEXT_STATE.REGS[Rd] = CURRENT_STATE.REGS[Rn] << immr;
     }
@@ -309,22 +309,22 @@ void mul(uint32_t instruction){
 
 void bcond(uint32_t instruction){
     if (get_cond(instruction) == 0b0000) {
-        printf("INST BEQ\n\n");
+        // printf("INST BEQ\n\n");
         beq(instruction);
     } else if (get_cond(instruction) == 0b1011) {
-        printf("INST BLT\n\n");
+        // printf("INST BLT\n\n");
         blt(instruction);
     } else if (get_cond(instruction) == 0b0001){
-        printf("INST BNE");
+        // printf("INST BNE");
         bne(instruction);
     } else if (get_cond(instruction) == 0b1100) {
-        printf("INST BGT");
+        // printf("INST BGT");
         bgt(instruction);
     } else if (get_cond(instruction) == 0b1010) {
-        printf("INST BGE");
+        // printf("INST BGE");
         bge(instruction);
     } else if (get_cond(instruction) == 0b1101) {
-        printf("INST BLE");
+        // printf("INST BLE");
         ble(instruction);
     }
 }
@@ -372,7 +372,7 @@ OpcodeInterval opcode_intervals[] = {
 
 void process_instruction(){
     uint32_t whole_instruction = mem_read_32(CURRENT_STATE.PC);
-    printf("INSTRUCTION: %x\n", whole_instruction);
+    // printf("INSTRUCTION: %x\n", whole_instruction);
     for (int i = 0; i < NUM_INSTRUCTIONS; i++){
         Instruction instruction = instructions[i];
         for (int j = 0; j < NUM_INTERVALS; j++){
@@ -381,7 +381,7 @@ void process_instruction(){
             if (opcode == instruction.opcode){
                 instruction.run(whole_instruction);
                 NEXT_STATE.REGS[31] = 0;
-                printf("%s\n\n", instruction.name);
+                // printf("%s\n\n", instruction.name);
             }
         }
     }
