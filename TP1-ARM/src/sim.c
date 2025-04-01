@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
-#include <string.h>
 #include <inttypes.h>
 #include "shell.h"
 
@@ -238,10 +237,6 @@ void sturb(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
     int64_t offset = sign_extend(imm9, 9);
-    // uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0b11111111;                        // Agarro los primeros 8 bits
-    // uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
-    // uint32_t Rt_8_or_mem = (mem & (((1 << (24))-1)<<8)) | Rt_8;                 // Lleno de 0s los primeros 8 bits y hago OR con los primeros 8 bits del registro Rt
-    // mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_8_or_mem);
     uint32_t Rt_8 = CURRENT_STATE.REGS[Rt] & 0xFF;
     mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_8);
     NEXT_STATE.PC += 4;
@@ -252,10 +247,6 @@ void sturh(uint32_t instruction) {
     uint32_t Rn = get_Rn(instruction);
     uint32_t Rt = get_Rd(instruction);
     int64_t offset = sign_extend(imm9, 9);
-    // uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0b1111111111111111;                        // Agarro los primeros 16 bits
-    // uint32_t mem = mem_read_32(CURRENT_STATE.REGS[Rn] + offset);
-    // uint32_t Rt_16_or_mem = (mem & (((1 << (16))-1)<<16)) | Rt_16;                 // Lleno de 0s los primeros 16 bits y hago OR con los primeros 16 bits del registro Rt
-    // mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_16_or_mem);
     uint32_t Rt_16 = CURRENT_STATE.REGS[Rt] & 0xFFFF;
     mem_write_32(CURRENT_STATE.REGS[Rn] + offset, Rt_16);
     NEXT_STATE.PC += 4;
@@ -382,7 +373,6 @@ OpcodeInterval opcode_intervals[] = {
 void process_instruction(){
     uint32_t whole_instruction = mem_read_32(CURRENT_STATE.PC);
     printf("INSTRUCTION: %x\n", whole_instruction);
-
     for (int i = 0; i < NUM_INSTRUCTIONS; i++){
         Instruction instruction = instructions[i];
         for (int j = 0; j < NUM_INTERVALS; j++){
@@ -390,6 +380,7 @@ void process_instruction(){
             uint32_t opcode = get_instruction_bit_field(whole_instruction, opcode_interval.size, opcode_interval.shift);
             if (opcode == instruction.opcode){
                 instruction.run(whole_instruction);
+                NEXT_STATE.REGS[31] = 0;
                 printf("%s\n\n", instruction.name);
             }
         }
