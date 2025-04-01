@@ -198,7 +198,7 @@ void blt(uint32_t instruction) {
 }
 
 void ble(uint32_t instruction) {
-    conditional_branch(instruction, !(CURRENT_STATE.FLAG_Z == 1 || CURRENT_STATE.FLAG_N == 0));
+    conditional_branch(instruction, !(CURRENT_STATE.FLAG_Z == 0 && CURRENT_STATE.FLAG_N == 0));
 }
 
 void bne(uint32_t instruction) {
